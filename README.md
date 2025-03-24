@@ -9,3 +9,9 @@ venv\Scripts\activate
 ```
 pip install speechbrain mysql-connector-python numpy scipy torch torchvision torchaudio PySoundFile fastapi uvicorn python-multipart flack
 ```
+```
+python ex_ebd.py
+```
+```
+python web.py
+```
