@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HỆ THỐNG TÌM KIẾM GIỌNG NÓI ĐÀN ÔNG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1 class="app-title">HỆ THỐNG TÌM KIẾM GIỌNG NÓI ĐÀN ÔNG</h1>
+                    <p class="app-subtitle">Phân tích và so sánh các file âm thanh bằng vector embedding</p>
+                    <P class="app-subtitle">Database: MySQL</P>
+                    <P class="app-subtitle">Nhóm 5</P>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="upload-section">
+            <h2 class="form-title">Tải lên file âm thanh</h2>
+            <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+                <div class="file-input-container">
+                    <label for="audioFile" class="file-input-label">
+                        <span id="fileLabel">Chọn file WAV</span>
+                    </label>
+                    <input type="file" name="file" id="audioFile" accept=".wav" class="file-input" required>
+                    <div class="file-name" id="fileName"></div>
+                    <p class="file-hint">Chỉ chấp nhận file định dạng WAV</p>
+                </div>
+                <button type="submit" class="submit-btn">Tìm kiếm</button>
+            </form>
+            <div class="loading" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Đang phân tích... Vui lòng đợi</p>
+            </div>
+        </section>
+
+        {% if results %}
+        <section class="results-section">
+            <h2 class="results-title">3 file âm thanh tương đồng nhất</h2>
+            {% for result in results %}
+            <div class="result-card">
+                <div class="result-header">
+                    <div class="result-file">{{ result.file_name }}</div>
+                    <div class="result-similarity">{{ (result.similarity * 100)|round(2) }}%</div>
+                </div>
+                <div class="result-duration">Thời lượng: {{ result.duration|round(2) }} s</div>
+                <audio controls class="result-player" src="{{ result.audio_url }}"></audio>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+    </main>
+
+    <script>
+        // Hiển thị tên file khi được chọn
+        document.getElementById('audioFile').addEventListener('change', function() {
+            var fileName = this.files[0] ? this.files[0].name : '';
+            document.getElementById('fileName').textContent = fileName;
+            document.getElementById('fileLabel').textContent = fileName ? 'File đã chọn' : 'Chọn file WAV';
+        });
+
+        // Hiển thị loading spinner
+        document.getElementById('uploadForm').addEventListener('submit', function() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
+        
