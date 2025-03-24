@@ -1,12 +1,11 @@
 MySQL
+Python
 ```
 python -m venv venv
-
+```
+```
 venv\Scripts\activate
-
-pip install speechbrain mysql-connector-python numpy scipy
-pip install torch torchvision torchaudio
-pip install PySoundFile
-pip install fastapi uvicorn python-multipart
-pip install flack
+```
+```
+pip install speechbrain mysql-connector-python numpy scipy torch torchvision torchaudio PySoundFile fastapi uvicorn python-multipart flack
 ```
