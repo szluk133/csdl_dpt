@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -30,6 +29,16 @@
                     <label for="audioFile" class="file-input-label">
                         <span id="fileLabel">Chọn file WAV</span>
                     </label>
+                    {% if input_filename %}
+                    <section class="input-section">
+                        <div class="result-card input-card">
+                            <div class="result-header">
+                                <div class="result-file">{{ input_filename }}</div>
+                            </div>
+                            <audio controls class="result-player" src="{{ input_audio_url }}"></audio>
+                        </div>
+                    </section>
+                    {% endif %}
                     <input type="file" name="file" id="audioFile" accept=".wav" class="file-input" required>
                     <div class="file-name" id="fileName"></div>
                     <p class="file-hint">Chỉ chấp nhận file định dạng WAV</p>
@@ -41,6 +50,7 @@
                 <p>Đang phân tích... Vui lòng đợi</p>
             </div>
         </section>
+
 
         {% if results %}
         <section class="results-section">
@@ -74,4 +84,3 @@
     </script>
 </body>
 </html>
-        

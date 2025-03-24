@@ -5,7 +5,7 @@ import shutil
 import numpy as np
 import torchaudio
 import mysql.connector
-from flask import Flask, request, render_template, redirect, url_for, send_file
+from flask import Flask, request, render_template, redirect, url_for, send_file, session
 from werkzeug.utils import secure_filename
 from speechbrain.pretrained import SpeakerRecognition
 
@@ -13,6 +13,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['CACHE_FOLDER'] = 'audio_cache'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Giới hạn kích thước file 16MB
+app.secret_key = 'your_secret_key'  # Thêm secret key cho session
 
 # Tạo thư mục cần thiết
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -73,8 +74,6 @@ def find_similar_audio(embedding, count=3):
     # Trả về các kết quả hàng đầu
     return similarities[:count]
 
-
-
 # Trang chủ HTML
 @app.route('/')
 def index():
@@ -93,9 +92,17 @@ def upload_file():
     if file and file.filename.endswith('.wav'):
         # Lưu file đã tải lên
         filename = secure_filename(file.filename)
-        temp_dir = tempfile.mkdtemp()
-        filepath = os.path.join(temp_dir, filename)
+        
+        # Lưu file vào thư mục uploads thay vì thư mục tạm để có thể phát lại
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
+        
+        # Lưu đường dẫn file input vào cache để phát lại
+        input_cache_path = os.path.join(app.config['CACHE_FOLDER'], f"input_{filename}")
+        shutil.copy2(filepath, input_cache_path)
+        
+        # Lưu tên file vào session để hiển thị và phát lại
+        session['input_filename'] = f"input_{filename}"
         
         # Lấy embedding cho file đã tải lên
         try:
@@ -125,11 +132,12 @@ def upload_file():
                     'audio_url': f"/audio/{file_name}"
                 })
             
-            # Dọn dẹp
-            os.remove(filepath)
-            os.rmdir(temp_dir)
-            
-            return render_template('index.html', results=results)
+            # Không xóa file input để có thể phát lại
+            # Trả về template với kết quả và thông tin file input
+            return render_template('index.html', 
+                results=results, 
+                input_filename=session.get('input_filename'),
+                input_audio_url=f"/audio/{session.get('input_filename')}")
             
         except Exception as e:
             return f"Lỗi khi xử lý file: {str(e)}"
@@ -144,6 +152,18 @@ def serve_audio(filename):
     # Kiểm tra xem file có trong cache không
     if os.path.exists(cache_path):
         return send_file(cache_path, mimetype='audio/wav')
+    
+    # Nếu là file input
+    if filename.startswith('input_'):
+        original_filename = filename[6:]  # Bỏ prefix "input_"
+        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], original_filename)
+        if os.path.exists(upload_path):
+            # Sao chép vào cache
+            try:
+                shutil.copy2(upload_path, cache_path)
+                return send_file(cache_path, mimetype='audio/wav')
+            except Exception as e:
+                return f"Lỗi khi truy cập file: {str(e)}", 500
     
     # Nếu không có trong cache, lấy từ database
     conn = get_db_connection()
@@ -169,5 +189,4 @@ def serve_audio(filename):
         return "Không tìm thấy file âm thanh trong cơ sở dữ liệu", 404
 
 if __name__ == '__main__':
-
     app.run(debug=True)
